@@ -273,6 +273,49 @@ sub grand_search_init {
     return;
   }
 
+  sub search_perlfaqs {
+    my ($self, $found_things, $pod) = @_;
+
+    my $found = 0;
+    my %found_in;
+    my $search_key = $self->opt_q;
+
+    my $rx = eval { qr/$search_key/ }
+      or die <<EOD;
+Invalid regular expression '$search_key' given as -q pattern:
+$@
+Did you mean \\Q$search_key ?
+
+EOD
+
+    local $_;
+    foreach my $file (@$found_things) {
+      die "invalid file spec: $!" if $file =~ /[<>|]/;
+      open(INFAQ, "<", $file)  # XXX 5.6ism
+        or die "Can't read-open $file: $!\nAborting";
+      my $faq_encoding = 'utf-8';
+      while (<INFAQ>) {
+        if (/^=encoding\s+(\S+)/) {
+          $faq_encoding = $1;
+        }
+        if ( m/^=head2\s+.*(?:$search_key)/i ) {
+          $found = 1;
+          push @$pod, "=head1 Found in $file\n\n" unless $found_in{$file}++;
+        }
+        elsif (/^=head[12]/) {
+          $found = 0;
+        }
+        next unless $found;
+        push @$pod, decode($faq_encoding, $_);
+      }
+      close(INFAQ);
+    }
+    die("No documentation for perl FAQ keyword `$search_key' found\n")
+      unless @$pod;
+
+    return;
+  }
+
   sub usage {
     my $self = shift;
     warn "@_\n" if @_;
