@@ -427,9 +427,31 @@ looks also under Pod::PerldocJp namespace.
 
 always try to use "text" formatter.
 
+=head2 maybe_generate_dynamic_pod
+
+adds encoding info while writing a temp file to show.
+
+=head2 search_perlfaqs, search_perlfunc, search_perlvar
+
+decode while searching.
+
 =head2 usage, usage_brief
 
 are translated.
+
+=head1 SEE ALSO
+
+=over 4
+
+=item L<http://perldoc.jp/>
+
+=item L<http://perldocjp.sourceforge.jp/>
+
+=item L<http://www.freeml.com/perldocjp>
+
+=back
+
+Kudos to all the contributors thereof.
 
 =head1 AUTHOR
 
