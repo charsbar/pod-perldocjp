@@ -6,7 +6,7 @@ use base 'Pod::Perldoc::ToText';
 use Encode;
 use Term::Encoding;
 
-my $encoding = Term::Encoding::get_encoding() || 'utf-8';
+my $term_encoding = Term::Encoding::get_encoding() || 'utf-8';
 
 {
   no warnings 'redefine';
@@ -70,8 +70,8 @@ my $encoding = Term::Encoding::get_encoding() || 'utf-8';
     my ($self, $text) = @_;
     $text =~ tr/\240\255/ /d;
     unless ($$self{opt_utf8} || $$self{CHECKED_ENCODING}) {
-      if ($encoding) {
-        eval { binmode ($$self{output_fh}, ":encoding($encoding)") };
+      if ($term_encoding) {
+        eval { binmode ($$self{output_fh}, ":encoding($term_encoding)") };
       }
       $$self{CHECKED_ENCODING} = 1;
     }

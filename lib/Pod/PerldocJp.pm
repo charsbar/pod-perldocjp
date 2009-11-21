@@ -10,7 +10,7 @@ use File::ShareDir qw(dist_dir);
 use Path::Extended;
 use utf8;
 
-my $encoding = Term::Encoding::get_encoding() || 'utf-8';
+my $term_encoding = Term::Encoding::get_encoding() || 'utf-8';
 
 our $VERSION = '0.01';
 
@@ -159,10 +159,10 @@ sub grand_search_init {
 
     # Skip introduction
     local $_;
-    my $func_encoding = 'utf-8';
+    my $encoding = 'utf-8';
     while (<PFUNC>) {
       if (/^=encoding\s+(\S+)/) {
-        $func_encoding = $1;
+        $encoding = $1;
       }
       last if /^=head2 $re/;
     }
@@ -184,7 +184,7 @@ sub grand_search_init {
       elsif (/^=back/) {
         --$inlist;
       }
-      push @$pod, decode($func_encoding, $_);
+      push @$pod, decode($encoding, $_);
       ++$found if /^\w/;        # found descriptive text
     }
     if (!@$pod) {
@@ -223,10 +223,10 @@ sub grand_search_init {
 
     # Skip introduction
     local $_;
-    my $var_encoding = 'utf-8';
+    my $encoding = 'utf-8';
     while (<PVAR>) {
       if (/^=encoding\s+(\S+)/) {
-        $var_encoding = $1;
+        $encoding = $1;
       }
       last if /^=over 8/;
     }
@@ -261,7 +261,7 @@ sub grand_search_init {
       elsif (/^=back/) {
         --$inlist;
       }
-      push @$pod, decode($var_encoding, $_);
+      push @$pod, decode($encoding, $_);
 #     ++$found if /^\w/;        # found descriptive text
     }
     @$pod = () unless $found;
@@ -293,10 +293,10 @@ EOD
       die "invalid file spec: $!" if $file =~ /[<>|]/;
       open(INFAQ, "<", $file)  # XXX 5.6ism
         or die "Can't read-open $file: $!\nAborting";
-      my $faq_encoding = 'utf-8';
+      my $encoding = 'utf-8';
       while (<INFAQ>) {
         if (/^=encoding\s+(\S+)/) {
-          $faq_encoding = $1;
+          $encoding = $1;
         }
         if ( m/^=head2\s+.*(?:$search_key)/i ) {
           $found = 1;
@@ -306,7 +306,7 @@ EOD
           $found = 0;
         }
         next unless $found;
-        push @$pod, decode($faq_encoding, $_);
+        push @$pod, decode($encoding, $_);
       }
       close(INFAQ);
     }
@@ -370,7 +370,7 @@ PODの索引には(あれば)ファイル名の一覧が(1行に1つ)含まれ�
 [PerldocJp v$Pod::PerldocJp::VERSION based on Perldoc v$Pod::Perldoc::VERSION]
 EOF
 
-    die encode($encoding => $usage);
+    die encode($term_encoding => $usage);
   }
 
   sub usage_brief {
@@ -389,7 +389,7 @@ EOF
 [PerldocJp v$Pod::PerldocJp::VERSION based on Perldoc v$Pod::Perldoc::VERSION]
 EOUSAGE
 
-    die encode($encoding => $usage);
+    die encode($term_encoding => $usage);
   }
 }
 
@@ -403,7 +403,8 @@ Pod::PerldocJp - perldoc that also checks perldoc.jp
 
 =head1 SYNOPSIS
 
-  perldocjp Some::Module
+  perldocjp -J Some::Module  # show translation (if any)
+  perldocjp    Some::Module  # show original version
 
 =head1 DESCRIPTION
 
