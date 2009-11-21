@@ -12,7 +12,7 @@ WriteMakefile(
     'File::ShareDir'      => '1.00',
     'LWP'                 => '0',
     'Path::Extended'      => '0.12',
-    'Pod::Perldoc'        => '0',
+    'Pod::Perldoc'        => '3.15',
     'Pod::Text'           => '3.13',
     'Pod::Simple'         => '3.08',
     'Term::Encoding'      => '0',
