@@ -58,6 +58,7 @@ sub grand_search_init {
     # Figure out what class(es) that could actually mean...
 
     my @classes;
+    # TWEAKED: to include "Pod::PerldocJp::To"
     foreach my $prefix ("Pod::PerldocJp::To", "Pod::Perldoc::To", "Pod::Simple::", "Pod::") {
       # Messy but smart:
       foreach my $stem (
@@ -86,7 +87,7 @@ sub grand_search_init {
     $self->opt_M_with('Pod::Perldoc::ToPod');   # the always-there fallthru
     $self->opt_o_with('text');
 
-    # XXX: man requires external pod2man, thus hard to tweak
+    # TWEAKED: man requires external pod2man, thus hard to tweak
     # $self->opt_o_with('man') unless IS_MSWin32 || IS_Dos
     #   || !($ENV{TERM} && (
     #       ($ENV{TERM} || '') !~ /dumb|emacs|none|unknown/i
@@ -115,6 +116,7 @@ sub grand_search_init {
       # I.e., it MIGHT be deleted at the end.
 
       my $in_list = $self->opt_f || $self->opt_v;
+      # TWEAKED: to add =encoding utf-8 and encode_utf8
       print $buffd "=encoding utf-8\n\n";
       print $buffd "=over 8\n\n" if $in_list;
       print $buffd map {encode_utf8($_)} @dynamic_pod  or die "Can't print $buffer: $!";
@@ -160,6 +162,7 @@ sub grand_search_init {
 
     # Skip introduction
     local $_;
+    # TWEAKED: to find encoding
     my $encoding = 'utf-8';
     while (<PFUNC>) {
       if (/^=encoding\s+(\S+)/) {
@@ -185,6 +188,7 @@ sub grand_search_init {
       elsif (/^=back/) {
         --$inlist;
       }
+      # TWEAKED: to decode
       push @$pod, decode($encoding, $_);
       ++$found if /^\w/;        # found descriptive text
     }
@@ -224,6 +228,7 @@ sub grand_search_init {
 
     # Skip introduction
     local $_;
+    # TWEAKED: to find encoding
     my $encoding = 'utf-8';
     while (<PVAR>) {
       if (/^=encoding\s+(\S+)/) {
@@ -262,6 +267,7 @@ sub grand_search_init {
       elsif (/^=back/) {
         --$inlist;
       }
+      # TWEAKED: to decode
       push @$pod, decode($encoding, $_);
 #     ++$found if /^\w/;        # found descriptive text
     }
@@ -294,6 +300,7 @@ EOD
       die "invalid file spec: $!" if $file =~ /[<>|]/;
       open(INFAQ, "<", $file)  # XXX 5.6ism
         or die "Can't read-open $file: $!\nAborting";
+      # TWEAKED: to find encoding
       my $encoding = 'utf-8';
       while (<INFAQ>) {
         if (/^=encoding\s+(\S+)/) {
@@ -307,6 +314,7 @@ EOD
           $found = 0;
         }
         next unless $found;
+        # TWEAKED: to decode
         push @$pod, decode($encoding, $_);
       }
       close(INFAQ);
@@ -317,6 +325,7 @@ EOD
     return;
   }
 
+  # TWEAKED: translation and encoding
   sub usage {
     my $self = shift;
     warn "@_\n" if @_;
