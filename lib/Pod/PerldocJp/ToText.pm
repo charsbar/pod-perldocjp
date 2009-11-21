@@ -28,6 +28,38 @@ my $encoding = Term::Encoding::get_encoding() || 'utf-8';
     $_;
   }
 
+  sub Pod::Text::wrap {
+    my $self = shift;
+    local $_ = shift;
+    my $output = '';
+    my $spaces = ' ' x $$self{MARGIN};
+    my $width = $$self{opt_width} - $$self{MARGIN};
+    my $current = 0;
+    my $pos = 0;
+    my $length = length;
+    while (--$length) {
+      if (ord(substr($_, $pos, 1)) > 255) {
+        $current++;
+      }
+      $current++;
+      if ($current > $width) {
+        if (s/^([^\n]{0,$pos})\s+// || s/^([^\n]{$pos})//) {
+          $output .= $spaces . $1 . "\n";
+          $current = $pos = 0;
+          $length = length;
+          next;
+        }
+        else {
+          last;
+        }
+      }
+      $pos++;
+    }
+    $output .= $spaces . $_;
+    $output =~ s/\s+$/\n\n/;
+    return $output;
+  }
+
   sub Pod::Text::output {
     my ($self, $text) = @_;
     $text =~ tr/\240\255/ /d;
