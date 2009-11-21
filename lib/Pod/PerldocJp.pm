@@ -198,6 +198,81 @@ sub grand_search_init {
     return;
   }
 
+  sub search_perlvar {
+    my ($self, $found_things, $pod) = @_;
+
+    my $opt = $self->opt_v;
+
+    if ( $opt !~ /^ (?: [\@\%\$]\S+ | [A-Z]\w* ) $/x ) {
+      die "'$opt' does not look like a Perl variable\n";
+    }
+
+    Pod::Perldoc::DEBUG > 2 and print "Search: @$found_things\n";
+
+    my $perlvar = shift @$found_things;
+    open(PVAR, "<", $perlvar)               # "Funk is its own reward"
+        or die("Can't open $perlvar: $!");
+
+    if ( $opt =~ /^\$\d+$/ ) { # handle $1, $2, ..., $9
+      $opt = '$<I<digits>>';
+    }
+    my $search_re = quotemeta($opt);
+
+    Pod::Perldoc::DEBUG > 2 and
+      print "Going to perlvar-scan for $search_re in $perlvar\n";
+
+    # Skip introduction
+    local $_;
+    my $var_encoding = 'utf-8';
+    while (<PVAR>) {
+      if (/^=encoding\s+(\S+)/) {
+        $var_encoding = $1;
+      }
+      last if /^=over 8/;
+    }
+
+    # Look for our variable
+    my $found = 0;
+    my $inheader = 1;
+    my $inlist = 0;
+    while (<PVAR>) {  # "The Mothership Connection is here!"
+      last if /^=head2 Error Indicators/;
+      # \b at the end of $` and friends borks things!
+      if ( m/^=item\s+$search_re\s/ )  {
+        $found = 1;
+      }
+      elsif (/^=item/) {
+        last if $found && !$inheader && !$inlist;
+      }
+      elsif (!/^\s+$/) { # not a blank line
+        if ( $found ) {
+          $inheader = 0; # don't accept more =item (unless inlist)
+	    }
+        else {
+          @$pod = (); # reset
+          $inheader = 1; # start over
+          next;
+        }
+      }
+
+      if (/^=over/) {
+        ++$inlist;
+      }
+      elsif (/^=back/) {
+        --$inlist;
+      }
+      push @$pod, decode($var_encoding, $_);
+#     ++$found if /^\w/;        # found descriptive text
+    }
+    @$pod = () unless $found;
+    if (!@$pod) {
+      die "No documentation for perl variable '$opt' found\n";
+    }
+    close PVAR                or die "Can't open $perlvar: $!";
+
+    return;
+  }
+
   sub usage {
     my $self = shift;
     warn "@_\n" if @_;
