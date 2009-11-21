@@ -94,6 +94,110 @@ sub grand_search_init {
     return;
   }
 
+  sub maybe_generate_dynamic_pod {
+    my ($self, $found_things) = @_;
+    my @dynamic_pod;
+
+    $self->search_perlfunc($found_things, \@dynamic_pod)  if  $self->opt_f;
+
+    $self->search_perlvar($found_things, \@dynamic_pod)   if  $self->opt_v;
+
+    $self->search_perlfaqs($found_things, \@dynamic_pod)  if  $self->opt_q;
+
+    if( ! $self->opt_f and ! $self->opt_q and ! $self->opt_v ) {
+      Pod::Perldoc::DEBUG > 4 and print "That's a non-dynamic pod search.\n";
+    } elsif ( @dynamic_pod ) {
+      $self->aside("Hm, I found some Pod from that search!\n");
+      my ($buffd, $buffer) = $self->new_tempfile('pod', 'dyn');
+
+      push @{ $self->{'temp_file_list'} }, $buffer;
+      # I.e., it MIGHT be deleted at the end.
+
+      my $in_list = $self->opt_f || $self->opt_v;
+      print $buffd "=encoding utf-8\n\n";
+      print $buffd "=over 8\n\n" if $in_list;
+      print $buffd map {encode_utf8($_)} @dynamic_pod  or die "Can't print $buffer: $!";
+      print $buffd "=back\n"     if $in_list;
+
+      close $buffd        or die "Can't close $buffer: $!";
+
+      @$found_things = $buffer;
+        # Yes, so found_things never has more than one thing in
+        #  it, by time we leave here
+
+      $self->add_formatter_option('__filter_nroff' => 1);
+
+    } else {
+      @$found_things = ();
+      $self->aside("I found no Pod from that search!\n");
+    }
+
+    return;
+  }
+
+  sub search_perlfunc {
+    my($self, $found_things, $pod) = @_;
+
+    Pod::Perldoc::DEBUG > 2 and print "Search: @$found_things\n";
+
+    my $perlfunc = shift @$found_things;
+    open(PFUNC, "<", $perlfunc) # "Funk is its own reward"
+        or die("Can't open $perlfunc: $!");
+
+    # Functions like -r, -e, etc. are listed under `-X'.
+    my $search_re = ($self->opt_f =~ /^-[rwxoRWXOeszfdlpSbctugkTBMAC]$/)
+                        ? '(?:I<)?-X' : quotemeta($self->opt_f) ;
+
+    Pod::Perldoc::DEBUG > 2 and
+     print "Going to perlfunc-scan for $search_re in $perlfunc\n";
+
+    my $re = 'Alphabetical Listing of Perl Functions';
+    if ( $self->opt_L ) {
+      my $tr = $self->{'translators'}->[0];
+      $re =  $tr->search_perlfunc_re if $tr->can('search_perlfunc_re');
+    }
+
+    # Skip introduction
+    local $_;
+    my $func_encoding = 'utf-8';
+    while (<PFUNC>) {
+      if (/^=encoding\s+(\S+)/) {
+        $func_encoding = $1;
+      }
+      last if /^=head2 $re/;
+    }
+
+    # Look for our function
+    my $found = 0;
+    my $inlist = 0;
+    while (<PFUNC>) {  # "The Mothership Connection is here!"
+      if ( m/^=item\s+$search_re\b/ )  {
+        $found = 1;
+      }
+      elsif (/^=item/) {
+        last if $found > 1 and not $inlist;
+      }
+      next unless $found;
+      if (/^=over/) {
+        ++$inlist;
+      }
+      elsif (/^=back/) {
+        --$inlist;
+      }
+      push @$pod, decode($func_encoding, $_);
+      ++$found if /^\w/;        # found descriptive text
+    }
+    if (!@$pod) {
+      die sprintf
+        "No documentation for perl function `%s' found\n",
+        $self->opt_f
+        ;
+    }
+    close PFUNC                or die "Can't open $perlfunc: $!";
+
+    return;
+  }
+
   sub usage {
     my $self = shift;
     warn "@_\n" if @_;
