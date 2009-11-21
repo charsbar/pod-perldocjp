@@ -26,6 +26,7 @@ sub grand_search_init {
       $self->aside("Searching for $page\n");
       if ($page =~ /^perl\w+$/) {
         my $file = $dir->file("perl/$page.pod");
+        $file->parent->mkdir unless $file->parent->exists;
         my $url  = "http://perldoc.jp/docs/perl/5.10.0/$page.pod.pod";
         unless ($file->size) {
           $ua->mirror($url => $file->absolute);
