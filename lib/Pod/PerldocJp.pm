@@ -442,6 +442,10 @@ are translated.
 
 =head1 SEE ALSO
 
+L<Pod::Perldoc>, L<Pod::Perldocs>
+
+And for Japanized Perl Resources Project:
+
 =over 4
 
 =item L<http://perldoc.jp/>
