@@ -14,12 +14,12 @@ my $encoding = Term::Encoding::get_encoding() || 'utf-8';
 
 our $VERSION = '0.01';
 
-sub opt_R { shift->_elem('opt_R', @_) }
+sub opt_J { shift->_elem('opt_J', @_) }
 
 sub grand_search_init {
   my ($self, $pages, @found) = @_;
 
-  if ($self->opt_R) {
+  if ($self->opt_J) {
     my $ua  = LWP::UserAgent->new(agent => "Pod-PerldocJp/$VERSION");
     my $dir = dir(dist_dir('Pod-PerldocJp'));
     foreach my $page (@$pages) {
@@ -348,7 +348,7 @@ perldoc [options] -v PerlVariable
     -w   フォーマット用のオプション:値(formatter_option:option_value)
     -L   国別コード。（あれば）翻訳を表示します
     -X   あれば索引を利用する (pod.idxを探します)
-    -R   perldoc.jpの日本語訳も検索
+    -J   perldoc.jpの日本語訳も検索
     -q   perlfaq[1-9]の質問を検索
     -f   Perlの組み込み関数を検索
     -v   Perlの定義済み変数を検索
@@ -379,7 +379,7 @@ EOF
     $me =~ s,.*[/\\],,; # get basename
 
     my $usage =<<"EOUSAGE";
-使い方: $me [-h] [-V] [-r] [-i] [-D] [-t] [-u] [-m] [-n nroffer_program] [-l] [-R] [-T] [-d output_filename] [-o output_format] [-M FormatterModuleNameToUse] [-w formatter_option:option_value] [-L translation_code] [-F] [-X] PageName|ModuleName|ProgramName
+使い方: $me [-h] [-V] [-r] [-i] [-D] [-t] [-u] [-m] [-n nroffer_program] [-l] [-J] [-T] [-d output_filename] [-o output_format] [-M FormatterModuleNameToUse] [-w formatter_option:option_value] [-L translation_code] [-F] [-X] PageName|ModuleName|ProgramName
        $me -f PerlFunc
        $me -q FAQKeywords
        $me -A PerlVar
@@ -407,13 +407,13 @@ Pod::PerldocJp - perldoc that also checks perldoc.jp
 
 =head1 DESCRIPTION
 
-This is a drop-in-replacement for C<perldoc> for Japanese people. Usage is the same, except it can look for a translation at L<http://perldoc.jp> with -R option.
+This is a drop-in-replacement for C<perldoc> for Japanese people. Usage is the same, except it can look for a translation at L<http://perldoc.jp> with -J option.
 
 =head1 TWEAKED METHODS
 
-=head2 opt_R
+=head2 opt_J
 
-to support -R option.
+to support -J option.
 
 =head2 grand_search_init
 
