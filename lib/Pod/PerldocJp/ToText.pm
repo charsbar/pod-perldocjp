@@ -43,8 +43,14 @@ my $encoding = Term::Encoding::get_encoding() || 'utf-8';
       }
       $current++;
       if ($current > $width) {
-        if (s/^([^\n]{0,$pos})\s+// || s/^([^\n]{$pos})//) {
-          $output .= $spaces . $1 . "\n";
+        if (s/^([^\n]{$pos})//) {
+          my $got = $1;
+          if ($got =~ /[!-~]$/ and $_ =~ /^[!-~]/) {
+            $got =~ s/([!-~]+)$//;
+            $_ = $1 . $_;
+          }
+          s/^\s+//;
+          $output .= $spaces . $got . "\n";
           $current = $pos = 0;
           $length = length;
           next;
