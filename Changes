@@ -1,5 +1,9 @@
 Revision history for Pod-PerldocJp
 
+0.03  2009/11/25
+  - oops, the previous fix was totally wrong.
+    tentatively stopped joining split words.
+
 0.02  2009/11/25
   - fixed infinite loop
   - fixed pod
