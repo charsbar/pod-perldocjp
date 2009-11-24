@@ -45,10 +45,10 @@ my $term_encoding = Term::Encoding::get_encoding() || 'utf-8';
       if ($current >= $width) {
         if (s/^([^\n]{$pos})//) {
           my $got = $1;
-          if ($got =~ /[!-~]$/ and $_ =~ /^[!-~]/) {
-            $got =~ s/([!-~]+)$//;
-            $_ = $1 . $_;
-          }
+#          if ($got =~ /[!-~]$/ and $_ =~ /^[!-~]/) {
+#            $got =~ s/([!-~]+)$//;
+#            $_ = $1 . $_;
+#          }
           s/^\s+//;
           $output .= $spaces . $got . "\n";
           $current = $pos = 0;
@@ -59,7 +59,6 @@ my $term_encoding = Term::Encoding::get_encoding() || 'utf-8';
           last;
         }
       }
-      last if $pos > $length;
       $pos++;
     }
     $output .= $spaces . $_;
