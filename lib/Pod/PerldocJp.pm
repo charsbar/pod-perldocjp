@@ -413,8 +413,8 @@ Pod::PerldocJp - perldoc that also checks perldoc.jp
 
 =head1 SYNOPSIS
 
-  perldocjp -J Some::Module  # show translation (if any)
-  perldocjp    Some::Module  # show original version
+  perldocjp -J perlfunc  # show translation (if any)
+  perldocjp    perlfunc  # show original version
 
 =head1 DESCRIPTION
 
@@ -428,7 +428,7 @@ to support -J option.
 
 =head2 grand_search_init
 
-looks for a 5.10.0 translation at perldoc.jp if -R option is set.
+looks for a 5.10.0 translation at perldoc.jp if -J option is set.
 
 =head2 opt_o_with
 
