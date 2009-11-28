@@ -21,6 +21,7 @@ sub grand_search_init {
 
   if ($self->opt_J) {
     my $ua  = LWP::UserAgent->new(agent => "Pod-PerldocJp/$VERSION");
+       $ua->env_proxy;
     my $dir = dir(dist_dir('Pod-PerldocJp'));
     unless (-w $dir) {
       $dir = dir(File::Spec->tmpdir, 'Pod-PerldocJp');
