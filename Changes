@@ -1,5 +1,8 @@
 Revision history for Pod-PerldocJp
 
+0.06 to be released
+  - added env_proxy (mattn's request)
+
 0.05  2009/11/28
   - there were still modules to spit warnings.
 
