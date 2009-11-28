@@ -45,14 +45,28 @@ my $term_encoding = Term::Encoding::get_encoding() || 'utf-8';
       if ($current >= $width) {
         if (s/^([^\n]{$pos})//) {
           my $got = $1;
-#          if ($got =~ /[!-~]$/ and $_ =~ /^[!-~]/) {
-#            $got =~ s/([!-~]+)$//;
-#            $_ = $1 . $_;
-#          }
+          # a long word divided in two
+          if ($got =~ /[!-~]$/ and $_ =~ /^[!-~]/) {
+             # if the whole line is a word (maybe a long url etc)
+             # take the rest of the word from the next line
+             if ($got =~ /^[!-~]+$/) {
+               if (s/^([!-~]+)//) {
+                 $got .= $1;
+               }
+             }
+             # otherwise, move the word to the next line
+             else {
+               if ($got =~ s/([!-~]+)$//) {
+                 $_ = $1 . $_;
+               }
+             }
+          }
           s/^\s+//;
           $output .= $spaces . $got . "\n";
           $current = $pos = 0;
-          $length = length;
+          $length  = length;
+          # this may happen if the whole of the next line is taken
+          last unless $length;
           next;
         }
         else {
