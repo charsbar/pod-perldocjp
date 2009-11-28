@@ -38,7 +38,7 @@ my $term_encoding = Term::Encoding::get_encoding() || 'utf-8';
     my $pos = 0;
     my $length = length;
     while (--$length) {
-      if (ord(substr($_, $pos, 1)) > 255) {
+      if (length and ord(substr($_, $pos, 1)) > 255) {
         $current++;
       }
       $current++;
