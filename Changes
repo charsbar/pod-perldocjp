@@ -1,5 +1,10 @@
 Revision history for Pod-PerldocJp
 
+0.04  2009/11/28
+  - use system's temporary directory to store Japanese pods
+    if the share directory for this module is not writable.
+  - fixed wrapper (hopefully).
+
 0.03  2009/11/25
   - oops, the previous fix was totally wrong.
     tentatively stopped joining split words.
