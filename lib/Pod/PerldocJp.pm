@@ -12,7 +12,7 @@ use utf8;
 
 my $term_encoding = Term::Encoding::get_encoding() || 'utf-8';
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 sub opt_J { shift->_elem('opt_J', @_) }
 

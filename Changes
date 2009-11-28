@@ -1,5 +1,8 @@
 Revision history for Pod-PerldocJp
 
+0.05  2009/11/28
+  - there were still modules to spit warnings.
+
 0.04  2009/11/28
   - use system's temporary directory to store Japanese pods
     if the share directory for this module is not writable.
