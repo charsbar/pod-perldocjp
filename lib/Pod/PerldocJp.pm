@@ -6,13 +6,13 @@ use base 'Pod::Perldoc';
 use Encode;
 use Term::Encoding;
 use LWP::UserAgent;
-use File::ShareDir qw(dist_dir);
+use File::HomeDir;
 use Path::Extended;
 use utf8;
 
 my $term_encoding = Term::Encoding::get_encoding() || 'utf-8';
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 sub opt_J { shift->_elem('opt_J', @_) }
 
@@ -22,18 +22,18 @@ sub grand_search_init {
   if ($self->opt_J) {
     my $ua  = LWP::UserAgent->new(agent => "Pod-PerldocJp/$VERSION");
        $ua->env_proxy;
-    my $dir = dir(dist_dir('Pod-PerldocJp'));
-    unless (-w $dir) {
-      $dir = dir(File::Spec->tmpdir, 'Pod-PerldocJp');
-    }
+    my $dir = dir(File::HomeDir->my_home, '.perldocjp')->mkdir
+           || dir(File::Spec->tmpdir,     '.perldocjp')->mkdir
+           || dir('.');
+
     foreach my $page (@$pages) {
       $self->aside("Searching for $page\n");
       if ($page =~ /^perl\w+$/) {
-        my $file = $dir->file("perl/$page.pod");
-        $file->parent->mkdir unless $file->parent->exists;
-        my $url  = "http://perldoc.jp/docs/perl/5.10.0/$page.pod.pod";
-        unless ($file->size) {
-          $ua->mirror($url => $file->absolute);
+        my $file   = $dir->file("perl/$page.pod");
+        my $parent = $file->parent->mkdir;
+        my $url = "http://perldoc.jp/docs/perl/5.10.0/$page.pod.pod";
+        unless ($file->size) { # XXX: or check freshness?
+          $ua->mirror($url => $file->absolute) if -w $parent;
         }
         push @found, $file->absolute if $file->size;
       }
