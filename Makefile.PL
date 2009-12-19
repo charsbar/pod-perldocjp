@@ -9,7 +9,6 @@ WriteMakefile(
   ABSTRACT_FROM => 'lib/Pod/PerldocJp.pm',
   PREREQ_PM => {
     'Encode'              => '0',
-    'File::HomeDir'       => '0.88',
     'LWP'                 => '0',
     'Path::Extended'      => '0.12',
     'Pod::Perldoc'        => '3.15',

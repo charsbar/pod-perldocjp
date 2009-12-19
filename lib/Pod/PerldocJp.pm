@@ -6,7 +6,6 @@ use base 'Pod::Perldoc';
 use Encode;
 use Term::Encoding;
 use LWP::UserAgent;
-use File::HomeDir;
 use Path::Extended;
 use utf8;
 
@@ -16,15 +15,37 @@ our $VERSION = '0.06';
 
 sub opt_J { shift->_elem('opt_J', @_) }
 
+sub _perldocjp_dir {
+  my $self = shift;
+
+  my @subs = (
+    sub {
+      require File::ShareDir;
+      dir(File::ShareDir::dist_dir('Pod-PerldocJp'));
+    },
+    sub {
+      require File::HomeDir;
+      dir(File::HomeDir->my_home, '.perldocjp');
+    },
+    sub { dir(File::Spec->tmpdir, '.perldocjp') },
+    sub { dir('.') },
+  );
+
+  foreach my $sub (@subs) {
+    my $dir = eval { $sub->() } or next;
+    $dir->logger(0);
+    $dir->mkdir;
+    return $dir if -d $dir && -w $dir;
+  };
+}
+
 sub grand_search_init {
   my ($self, $pages, @found) = @_;
 
   if ($self->opt_J) {
     my $ua  = LWP::UserAgent->new(agent => "Pod-PerldocJp/$VERSION");
        $ua->env_proxy;
-    my $dir = dir(File::HomeDir->my_home, '.perldocjp')->mkdir
-           || dir(File::Spec->tmpdir,     '.perldocjp')->mkdir
-           || dir('.');
+    my $dir = $self->_perldocjp_dir();
 
     foreach my $page (@$pages) {
       $self->aside("Searching for $page\n");
@@ -399,7 +420,7 @@ EOF
        $me -A PerlVar
 
 -hオプションをつけるともう少し詳しいヘルプが表示されます。
-詳細は"perldocjp perldoc"をご覧ください。
+詳細は"perldocjp perldocjp"をご覧ください。
 [PerldocJp v$Pod::PerldocJp::VERSION based on Perldoc v$Pod::Perldoc::VERSION]
 EOUSAGE
 
@@ -411,6 +432,8 @@ EOUSAGE
 
 __END__
 
+=encoding utf-8
+
 =head1 NAME
 
 Pod::PerldocJp - perldoc that also checks perldoc.jp
@@ -419,6 +442,7 @@ Pod::PerldocJp - perldoc that also checks perldoc.jp
 
   perldocjp -J perlfunc  # show translation (if any)
   perldocjp    perlfunc  # show original version
+  perldocjp    perldocjp # 日本語で使い方を見る
 
 =head1 DESCRIPTION
 

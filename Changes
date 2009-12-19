@@ -1,8 +1,9 @@
 Revision history for Pod-PerldocJp
 
 0.06 to be released
-  - switched to use File::HomeDir
+  - check writability of the directory to store pod
   - added env_proxy (mattn's request)
+  - added Japanese document
 
 0.05  2009/11/28
   - there were still modules to spit warnings.
