@@ -1,6 +1,6 @@
 Revision history for Pod-PerldocJp
 
-0.06 to be released
+0.06 2009/12/19
   - check writability of the directory to store pod
   - added env_proxy (mattn's request)
   - added Japanese document
