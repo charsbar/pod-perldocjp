@@ -7,6 +7,7 @@ use Encode;
 use Term::Encoding;
 use LWP::UserAgent;
 use Path::Extended;
+use URI::Escape;
 use utf8;
 
 my $term_encoding = Term::Encoding::get_encoding() || 'utf-8';
@@ -19,10 +20,6 @@ sub _perldocjp_dir {
   my $self = shift;
 
   my @subs = (
-    sub {
-      require File::ShareDir;
-      dir(File::ShareDir::dist_dir('Pod-PerldocJp'));
-    },
     sub {
       require File::HomeDir;
       dir(File::HomeDir->my_home, '.perldocjp');
@@ -49,15 +46,22 @@ sub grand_search_init {
 
     foreach my $page (@$pages) {
       $self->aside("Searching for $page\n");
-      if ($page =~ /^perl\w+$/) {
-        my $file   = $dir->file("perl/$page.pod");
-        my $parent = $file->parent->mkdir;
-        my $url = "http://perldoc.jp/docs/perl/5.10.0/$page.pod.pod";
-        unless ($file->size) { # XXX: or check freshness?
-          $ua->mirror($url => $file->absolute) if -w $parent;
+      my $url = "http://perldoc.tcool.org/api/pod/$page";
+      my $file = $dir->file(uri_escape($page));
+      unless ($file->size && $file->mtime > time - 60 * 60 * 24) {
+        if (-w $dir) {
+          my $res = $ua->mirror($url => $file->absolute);
+          if ($file->size && (my $pod = $file->slurp) !~ /^=encoding\s/m) {
+            my $ctype = $res->header('Content-Type');
+            my ($charset) = $ctype =~ /charset\s*=\s*([\w-]+)/;
+            if ($charset) {
+              $pod = "=encoding $charset\n\n$pod";
+              $file->save($pod);
+            }
+          }
         }
-        push @found, $file->absolute if $file->size;
       }
+      push @found, $file->absolute if $file->size;
     }
     return @found if @found;
   }
