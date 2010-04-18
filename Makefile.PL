@@ -17,6 +17,7 @@ WriteMakefile(
     'Term::Encoding'      => '0',
     'Test::More'          => '0.47',
     'Test::UseAllModules' => '0.10',
+    'URI::Escape'         => '0',
   },
   EXE_FILES => [qw(perldocjp)],
   ($ExtUtils::MakeMaker::VERSION >= 6.31
