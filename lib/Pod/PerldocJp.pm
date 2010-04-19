@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use base 'Pod::Perldoc';
 use Encode;
+use Encode::Guess;
 use Term::Encoding;
 use LWP::UserAgent;
 use Path::Extended;
@@ -47,6 +48,9 @@ sub grand_search_init {
     my $api_url = $ENV{PERLDOCJP_SERVER} || 'http://perldoc.tcool.org/api';
     $api_url =~ s|/+$||;
 
+    my @encodings =
+      split ' ', $ENV{PERLDOCJP_ENCODINGS} || 'euc-jp shiftjis utf8';
+
     foreach my $page (@$pages) {
       $self->aside("Searching for $page\n");
       my $url = "$api_url/pod/$page";
@@ -55,10 +59,16 @@ sub grand_search_init {
         if (-w $dir) {
           my $res = $ua->mirror($url => $file->absolute);
           if ($file->size && (my $pod = $file->slurp) !~ /^=encoding\s/m) {
-            my $ctype = $res->header('Content-Type');
-            my ($charset) = $ctype =~ /charset\s*=\s*([\w-]+)/;
-            if ($charset) {
-              $pod = "=encoding $charset\n\n$pod";
+            my $encoding;
+            if (my $ctype = $res->header('Content-Type')) {
+              ($encoding) = $ctype =~ /charset\s*=\s*([\w-]+)/;
+            }
+            else {
+              my $enc = guess_encoding($pod, @encodings);
+              $encoding = $enc->name if ref $enc;
+            }
+            if ($encoding) {
+              $pod = "=encoding $encoding\n\n$pod";
               $file->save($pod);
             }
           }
