@@ -4,12 +4,29 @@ use strict;
 use warnings;
 use base 'Pod::Perldoc::ToText';
 use Encode;
+use Encode::Guess;
 use Term::Encoding;
 
 my $term_encoding = Term::Encoding::get_encoding() || 'utf-8';
+my @encodings =
+  split ' ', $ENV{PERLDOCJP_ENCODINGS} || 'euc-jp shiftjis utf8';
 
 {
   no warnings 'redefine';
+
+  sub decode_if_necessary {
+    my ($self, $text) = @_;
+    return $text unless Encode::is_utf8($text);
+    if ($self->{encoding}) {
+      return decode($self->{encoding}, $text);
+    }
+    my $enc = guess_encoding($text, @encodings);
+    if (ref $enc && grep { $enc->name } @encodings) {
+      $self->{encoding} = $enc->name;
+      return decode($self->{encoding}, $text);
+    }
+    return $text;
+  }
 
   sub Pod::Text::cmd_encoding {
     my ($self, $text, $line) = @_;
@@ -19,9 +36,7 @@ my $term_encoding = Term::Encoding::get_encoding() || 'utf-8';
   sub Pod::Text::preprocess_paragraph {
     my $self = shift;
     local $_ = shift;
-    if ($self->{encoding}) {
-      $_ = decode($self->{encoding}, $_);
-    }
+    $_ = decode_if_necessary($self, $_);
 
     1 while s/^(.*?)(\t+)/$1 . ' ' x (length ($2) * 8 - length ($1) % 8)/me;
     $self->output_code ($_) if $self->cutting;
@@ -31,6 +46,8 @@ my $term_encoding = Term::Encoding::get_encoding() || 'utf-8';
   sub Pod::Text::wrap {
     my $self = shift;
     local $_ = shift;
+    $_ = decode_if_necessary($self, $_);
+
     my $output = '';
     my $spaces = ' ' x $$self{MARGIN};
     my $width = $$self{opt_width} - $$self{MARGIN};
@@ -82,6 +99,9 @@ my $term_encoding = Term::Encoding::get_encoding() || 'utf-8';
 
   sub Pod::Text::output {
     my ($self, $text) = @_;
+
+    $text = decode_if_necessary($self, $text);
+
     $text =~ tr/\240\255/ /d;
     unless ($$self{opt_utf8} || $$self{CHECKED_ENCODING}) {
       if ($term_encoding) {
