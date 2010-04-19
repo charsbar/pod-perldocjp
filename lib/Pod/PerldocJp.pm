@@ -59,13 +59,16 @@ sub grand_search_init {
         if (-w $dir) {
           my $res = $ua->mirror($url => $file->absolute);
           if ($file->size && (my $pod = $file->slurp) !~ /^=encoding\s/m) {
+            # You can't trust perldoc.jp's Content-Type too much.
+            # (there're several utf-8 translations, though perldoc.jp
+            # is (or was) supposed to use euc-jp)
             my $encoding;
-            if (my $ctype = $res->header('Content-Type')) {
-              ($encoding) = $ctype =~ /charset\s*=\s*([\w-]+)/;
+            my $enc = guess_encoding($pod, @encodings);
+            if (ref $enc) {
+              $encoding = $enc->name;
             }
-            else {
-              my $enc = guess_encoding($pod, @encodings);
-              $encoding = $enc->name if ref $enc;
+            elsif (my $ctype = $res->header('Content-Type')) {
+              ($encoding) = $ctype =~ /charset\s*=\s*([\w-]+)/;
             }
             if ($encoding) {
               $pod = "=encoding $encoding\n\n$pod";
