@@ -16,7 +16,7 @@ my @encodings =
 
   sub decode_if_necessary {
     my ($self, $text) = @_;
-    return $text unless Encode::is_utf8($text);
+    return $text if Encode::is_utf8($text);
     if ($self->{encoding}) {
       return decode($self->{encoding}, $text);
     }
