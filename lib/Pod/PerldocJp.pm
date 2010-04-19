@@ -50,7 +50,7 @@ sub grand_search_init {
     foreach my $page (@$pages) {
       $self->aside("Searching for $page\n");
       my $url = "$api_url/pod/$page";
-      my $file = $dir->file(uri_escape($page));
+      my $file = $dir->file(uri_escape($page) . '.pod');
       unless ($file->size && $file->mtime > time - 60 * 60 * 24) {
         if (-w $dir) {
           my $res = $ua->mirror($url => $file->absolute);
