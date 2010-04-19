@@ -1,5 +1,9 @@
 Revision history for Pod-PerldocJp
 
+0.08 2010/04/20
+  - api server/supported encodings are configurable now
+  - guess encoding if necessary
+
 0.07 2010/04/19
   - supported other perldoc.jp pods
 
