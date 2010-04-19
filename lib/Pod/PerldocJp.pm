@@ -44,9 +44,12 @@ sub grand_search_init {
        $ua->env_proxy;
     my $dir = $self->_perldocjp_dir();
 
+    my $api_url = $ENV{PERLDOCJP_SERVER} || 'http://perldoc.tcool.org/api';
+    $api_url =~ s|/+$||;
+
     foreach my $page (@$pages) {
       $self->aside("Searching for $page\n");
-      my $url = "http://perldoc.tcool.org/api/pod/$page";
+      my $url = "$api_url/pod/$page";
       my $file = $dir->file(uri_escape($page));
       unless ($file->size && $file->mtime > time - 60 * 60 * 24) {
         if (-w $dir) {
