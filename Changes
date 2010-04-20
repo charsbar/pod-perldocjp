@@ -1,5 +1,8 @@
 Revision history for Pod-PerldocJp
 
+0.09 2010/04/20
+  - now you can pass urls directly
+
 0.08 2010/04/20
   - api server/supported encodings are configurable now
   - guess encoding if necessary
