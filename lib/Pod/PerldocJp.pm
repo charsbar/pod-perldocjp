@@ -13,7 +13,7 @@ use utf8;
 
 my $term_encoding = Term::Encoding::get_encoding() || 'utf-8';
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 
 sub opt_J { shift->_elem('opt_J', @_) }
 
@@ -379,7 +379,7 @@ EOD
     $! = 0;
 
     my $usage = <<"EOF";
-perldoc [options] PageName|ModuleName|ProgramName...
+perldoc [options] PageName|ModuleName|ProgramName|URL...
 perldoc [options] -f BuiltinFunction
 perldoc [options] -q FAQRegex
 perldoc [options] -v PerlVariable
@@ -411,7 +411,8 @@ perldoc [options] -v PerlVariable
 PageName|ModuleName...
     表示したいドキュメント名です。「perlfunc」のようなページ名、
     モジュール名(「Term::Info」または「Term/Info」)、「perldoc」
-    のようなプログラム名を指定できます。
+    のようなプログラム名を指定できます。0.09からはPODのURLを指定
+    することもできるようになりました。
 
 BuiltinFunction
     Perlの関数名です。「perlfunc」からドキュメントを抽出します。
@@ -434,7 +435,7 @@ EOF
     $me =~ s,.*[/\\],,; # get basename
 
     my $usage =<<"EOUSAGE";
-使い方: $me [-h] [-V] [-r] [-i] [-D] [-t] [-u] [-m] [-n nroffer_program] [-l] [-J] [-T] [-d output_filename] [-o output_format] [-M FormatterModuleNameToUse] [-w formatter_option:option_value] [-L translation_code] [-F] [-X] PageName|ModuleName|ProgramName
+使い方: $me [-h] [-V] [-r] [-i] [-D] [-t] [-u] [-m] [-n nroffer_program] [-l] [-J] [-T] [-d output_filename] [-o output_format] [-M FormatterModuleNameToUse] [-w formatter_option:option_value] [-L translation_code] [-F] [-X] PageName|ModuleName|ProgramName|URL
        $me -f PerlFunc
        $me -q FAQKeywords
        $me -A PerlVar
