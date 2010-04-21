@@ -21,7 +21,7 @@ my @encodings =
       return decode($self->{encoding}, $text);
     }
     my $enc = guess_encoding($text, @encodings);
-    if (ref $enc && grep { $enc->name } @encodings) {
+    if (ref $enc && grep { $_ eq $enc->name } @encodings) {
       $self->{encoding} = $enc->name;
       return decode($self->{encoding}, $text);
     }
