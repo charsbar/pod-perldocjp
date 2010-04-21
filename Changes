@@ -1,5 +1,8 @@
 Revision history for Pod-PerldocJp
 
+0.10 2010/04/21
+  - encode guessing was broken
+
 0.09 2010/04/20
   - now you can pass urls directly
 
