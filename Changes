@@ -1,5 +1,10 @@
 Revision history for Pod-PerldocJp
 
+0.11 2010/04/23
+  - don't assume PERLDOCJP_SERVER have /pod/ in its path;
+    this makes it easier to launch an api server that serves local
+    files
+
 0.10 2010/04/21
   - encode guessing was broken
 
