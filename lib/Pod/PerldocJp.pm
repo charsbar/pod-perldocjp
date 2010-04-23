@@ -47,7 +47,7 @@ sub grand_search_init {
     my $ua  = LWP::UserAgent->new(agent => "Pod-PerldocJp/$VERSION");
        $ua->env_proxy;
 
-    my $api_url = $ENV{PERLDOCJP_SERVER} || 'http://perldoc.tcool.org/api';
+    my $api_url = $ENV{PERLDOCJP_SERVER} || 'http://perldoc.tcool.org/api/pod';
     $api_url =~ s|/+$||;
 
     my @encodings =
@@ -55,7 +55,7 @@ sub grand_search_init {
 
     foreach my $page (@$pages) {
       $self->aside("Searching for $page\n");
-      my $url = ($page =~ /^https?:/) ? $page : "$api_url/pod/$page";
+      my $url = ($page =~ /^https?:/) ? $page : "$api_url/$page";
       my $file = $dir->file(uri_escape($page, '^A-Za-z0-9_') . '.pod');
       unless ($file->size && $file->mtime > time - 60 * 60 * 24) {
         my $res = $ua->mirror($url => $file->absolute);
