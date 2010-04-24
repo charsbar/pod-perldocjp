@@ -103,12 +103,7 @@ my @encodings =
     $text = decode_if_necessary($self, $text);
 
     $text =~ tr/\240\255/ /d;
-    unless ($$self{opt_utf8} || $$self{CHECKED_ENCODING}) {
-      if ($term_encoding) {
-        eval { binmode ($$self{output_fh}, ":encoding($term_encoding)") };
-      }
-      $$self{CHECKED_ENCODING} = 1;
-    }
+    $text = Encode::encode($term_encoding, $text, Encode::PERLQQ);
     print { $$self{output_fh} } $text;
   }
 }
