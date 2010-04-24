@@ -1,5 +1,8 @@
 Revision history for Pod-PerldocJp
 
+0.12 2010/04/24
+  - ditch binmode encoding to silence warnings
+
 0.11 2010/04/23
   - don't assume PERLDOCJP_SERVER have /pod/ in its path;
     this makes it easier to launch an api server that serves local
