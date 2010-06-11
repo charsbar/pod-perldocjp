@@ -43,15 +43,15 @@ sub grand_search_init {
   my $dir = $self->_perldocjp_dir()
     or return $self->SUPER::grand_search_init($pages, @found);
 
+    my @encodings =
+      split ' ', $ENV{PERLDOCJP_ENCODINGS} || 'euc-jp shiftjis utf8';
+
   if ($self->opt_J or ($pages->[0] && $pages->[0] =~ /^https?:/)) {
     my $ua  = LWP::UserAgent->new(agent => "Pod-PerldocJp/$VERSION");
        $ua->env_proxy;
 
     my $api_url = $ENV{PERLDOCJP_SERVER} || 'http://perldoc.tcool.org/api/pod';
     $api_url =~ s|/+$||;
-
-    my @encodings =
-      split ' ', $ENV{PERLDOCJP_ENCODINGS} || 'euc-jp shiftjis utf8';
 
     foreach my $page (@$pages) {
       $self->aside("Searching for $page\n");
@@ -82,7 +82,26 @@ sub grand_search_init {
     return @found if @found;
   }
 
-  $self->SUPER::grand_search_init($pages, @found);
+  @found = $self->SUPER::grand_search_init($pages, @found);
+
+  if ($self->opt_J) {
+    foreach my $path (@found) {
+      my $pod = file($path)->slurp;
+      unless ($pod =~ /^=encoding\s/m) {
+        my $encoding;
+        my $enc = guess_encoding($pod, @encodings);
+        if (ref $enc) {
+          $encoding = $enc->name;
+          next if $encoding eq 'ascii';
+          $pod = "=encoding $encoding\n\n$pod";
+          my $file = $dir->file(uri_escape($path, '^A-Za-z0-9_'));
+          $file->save($pod);
+          $path = $file->absolute if $file->size;
+        }
+      }
+    }
+  }
+  @found;
 }
 
 {
