@@ -1,5 +1,8 @@
 Revision history for Pod-PerldocJp
 
+0.13 2010/06/11
+  - better local file handling (suggested by AzureStone)
+
 0.12 2010/04/24
   - ditch binmode encoding to silence warnings
 
