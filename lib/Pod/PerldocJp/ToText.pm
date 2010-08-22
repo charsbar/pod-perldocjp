@@ -14,7 +14,7 @@ my @encodings =
 {
   no warnings 'redefine';
 
-  sub decode_if_necessary {
+  sub _decode_if_necessary {
     my ($self, $text) = @_;
     return $text if Encode::is_utf8($text);
     if ($self->{encoding}) {
@@ -36,7 +36,7 @@ my @encodings =
   sub Pod::Text::preprocess_paragraph {
     my $self = shift;
     local $_ = shift;
-    $_ = decode_if_necessary($self, $_);
+    $_ = _decode_if_necessary($self, $_);
 
     1 while s/^(.*?)(\t+)/$1 . ' ' x (length ($2) * 8 - length ($1) % 8)/me;
     $self->output_code ($_) if $self->cutting;
@@ -46,7 +46,7 @@ my @encodings =
   sub Pod::Text::wrap {
     my $self = shift;
     local $_ = shift;
-    $_ = decode_if_necessary($self, $_);
+    $_ = _decode_if_necessary($self, $_);
 
     my $output = '';
     my $spaces = ' ' x $$self{MARGIN};
@@ -100,7 +100,7 @@ my @encodings =
   sub Pod::Text::output {
     my ($self, $text) = @_;
 
-    $text = decode_if_necessary($self, $text);
+    $text = _decode_if_necessary($self, $text);
 
     $text =~ tr/\240\255/ /d;
     $text = Encode::encode($term_encoding, $text, Encode::PERLQQ);
