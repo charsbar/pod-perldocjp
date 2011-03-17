@@ -1,5 +1,8 @@
 Revision history for Pod-PerldocJp
 
+0.14 2011/03/17
+  - hid a private function
+
 0.13 2010/06/11
   - better local file handling (suggested by AzureStone)
 
