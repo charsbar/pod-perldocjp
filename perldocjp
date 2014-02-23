@@ -3,10 +3,7 @@
 require 5;
 BEGIN { $^W = 1 if $ENV{'PERLDOCDEBUG'} }
 use Pod::PerldocJp;
-
-local $ENV{PERLDOC} = $ENV{PERLDOC} ? "$ENV{PERLDOC} -J" : "-J";
-
-exit( Pod::PerldocJp->run() );
+exit( Pod::PerldocJp->run(opt_J => 1) );
 
 __END__
 
