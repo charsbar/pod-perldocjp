@@ -3,6 +3,9 @@
 require 5;
 BEGIN { $^W = 1 if $ENV{'PERLDOCDEBUG'} }
 use Pod::PerldocJp;
+
+local $ENV{PERLDOC} = $ENV{PERLDOC} ? "$ENV{PERLDOC} -J" : "-J";
+
 exit( Pod::PerldocJp->run() );
 
 __END__
@@ -15,28 +18,23 @@ perldocjp - 日本語訳されたPerlのドキュメントを読む
 
 =head1 簡単な使い方
 
-  perldocjp -J  perldebug  # Perlに付属のperldebugの翻訳を読む
-  perldocjp     perldebug  # 原文を読む
-  perldocjp -Jf print      # print関数の使い方を日本語で読む
-  perldocjp -Jv $_         # $_変数の使い方を日本語で読む
-  perldocjp -Jq debug      # debugについてのFAQを日本語で読む
-  perldocjp -Jl perldebug  # ダウンロードしてきた翻訳のありかを調べる
-  perldocjp -Jm perldebug  # ダウンロードしてきた翻訳のソースを見る
+  perldocjp    perldebug  # Perlに付属のperldebugの翻訳を読む
+  perldocjp -f print      # print関数の使い方を日本語で読む
+  perldocjp -v $_         # $_変数の使い方を日本語で読む
+  perldocjp -q debug      # debugについてのFAQを日本語で読む
+  perldocjp -l perldebug  # ダウンロードしてきた翻訳のありかを調べる
+  perldocjp -m perldebug  # ダウンロードしてきた翻訳のソースを見る
 
   perldocjp     perljp     # もともと日本語で書かれているドキュメントもOK
   perldocjp -h             # コマンド一覧を見る
 
 =head1 Pod::PerldocJpについて
 
-Pod::PerldocJpとperldocjpコマンドは、現在おもにJapanized Perl Resources Projectで翻訳されているPerl付属のドキュメントなどをコマンドライン上でも正しく表示できるようにするためのものです。perldocjpコマンドの使い方は基本的にperldocコマンドと同じですが、-Jオプションをつけると、http://perldoc.jp/に該当する文書の翻訳があればそれをダウンロードして表示します（現在はPerl 5.10のドキュメントのみ対応していますが、将来的にはその他のバージョンやほかのモジュール類のドキュメントにも対応する予定です）。
+Pod::PerldocJpとperldocjpコマンドは、現在おもにJapanized Perl Resources Projectで翻訳されているPerl付属のドキュメントなどをコマンドライン上でも正しく表示できるようにするためのものです。perldocjpコマンドの使い方は基本的にperldocコマンドと同じですが、http://perldoc.jp/に該当する文書の翻訳があればそれをダウンロードして表示します（現在はPerl 5.10のドキュメントのみ対応していますが、将来的にはその他のバージョンやほかのモジュール類のドキュメントにも対応する予定です）。
 
-また、perldocjpコマンドはもともと日本語で書かれているドキュメントも端末の設定にあわせて正しく表示できます（ダウンロードの必要がない場合-Jオプションをつける必要はありません）。
+また、perldocjpコマンドはもともと日本語で書かれているドキュメントも端末の設定にあわせて正しく表示できます。
 
 その他の使い方についてはperldocjp -hやperldoc perldocをご覧ください。
-
-=head1 上手な使い方
-
-perldocjpコマンドはそのままでも十分実用的ですが、エイリアスを使って常に-Jオプションをつけるようにしたり、コマンドヒストリーをたどりやすくするためjperldocのような名前にリネームするといっそう便利に使えるというレポートが届いています。
 
 =head1 参照
 
