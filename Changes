@@ -1,5 +1,8 @@
 Revision history for Pod-PerldocJp
 
+0.15 2014/02/23
+  - set -J option (to translate) internally
+
 0.14 2011/03/17
   - hid a private function
 
