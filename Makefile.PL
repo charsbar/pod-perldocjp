@@ -9,7 +9,7 @@ WriteMakefile(
   ABSTRACT_FROM => 'lib/Pod/PerldocJp.pm',
   PREREQ_PM => {
     'Encode'              => '0',
-    'LWP'                 => '0',
+    'HTTP::Tiny'          => '0',
     'Path::Extended'      => '0.12',
     'Pod::Perldoc'        => '3.15',
     'Pod::Text'           => '3.13',
