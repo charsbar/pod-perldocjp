@@ -7,7 +7,7 @@ use Encode;
 use Encode::Guess;
 use Term::Encoding;
 use HTTP::Tiny;
-use Path::Extended;
+use Path::Tiny;
 use URI::Escape;
 use utf8;
 
@@ -23,16 +23,15 @@ sub _perldocjp_dir {
   my @subs = (
     sub {
       require File::HomeDir;
-      dir(File::HomeDir->my_home, '.perldocjp');
+      path(File::HomeDir->my_home, '.perldocjp');
     },
-    sub { dir(File::Spec->tmpdir, '.perldocjp') },
-    sub { dir('.') },
+    sub { path(File::Spec->tmpdir, '.perldocjp') },
+    sub { path('.') },
   );
 
   foreach my $sub (@subs) {
     my $dir = eval { $sub->() } or next;
-    $dir->logger(0);
-    $dir->mkdir;
+    $dir->mkpath;
     return $dir if -d $dir && -w $dir;
   };
 }
@@ -55,9 +54,9 @@ sub grand_search_init {
     foreach my $page (@$pages) {
       $self->aside("Searching for $page\n");
       my $url = ($page =~ /^https?:/) ? $page : "$api_url/$page";
-      my $file = $dir->file(uri_escape($page, '^A-Za-z0-9_') . '.pod');
-      unless ($file->size && $file->mtime > time - 60 * 60 * 24) {
-        my $res = $ua->mirror($url => $file->absolute);
+      my $file = $dir->child(uri_escape($page, '^A-Za-z0-9_') . '.pod');
+      unless ($file->stat->size && $file->stat->mtime > time - 60 * 60 * 24) {
+        my $res = $ua->mirror($url => "$file");
         if ($res->{success} && (my $pod = $file->slurp) !~ /^=encoding\s/m) {
           # You can't trust perldoc.jp's Content-Type too much.
           # (there're several utf-8 translations, though perldoc.jp
@@ -72,11 +71,11 @@ sub grand_search_init {
           }
           if ($encoding) {
             $pod = "=encoding $encoding\n\n$pod";
-            $file->save($pod);
+            $file->spew($pod);
           }
         }
       }
-      push @found, $file->absolute if $file->size;
+      push @found, "$file" if $file->stat->size;
     }
     return @found if @found;
   }
@@ -85,7 +84,7 @@ sub grand_search_init {
 
   if ($self->opt_J) {
     foreach my $path (@found) {
-      my $pod = file($path)->slurp;
+      my $pod = path($path)->slurp;
       unless ($pod =~ /^=encoding\s/m) {
         my $encoding;
         my $enc = guess_encoding($pod, @encodings);
@@ -93,9 +92,9 @@ sub grand_search_init {
           $encoding = $enc->name;
           next if $encoding eq 'ascii';
           $pod = "=encoding $encoding\n\n$pod";
-          my $file = $dir->file(uri_escape($path, '^A-Za-z0-9_'));
-          $file->save($pod);
-          $path = $file->absolute if $file->size;
+          my $file = $dir->child(uri_escape($path, '^A-Za-z0-9_'));
+          $file->spew($pod);
+          $path = "$file" if $file->stat->size;
         }
       }
     }
