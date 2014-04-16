@@ -6,7 +6,7 @@ use base 'Pod::Perldoc';
 use Encode;
 use Encode::Guess;
 use Term::Encoding;
-use LWP::UserAgent;
+use HTTP::Tiny;
 use Path::Extended;
 use URI::Escape;
 use utf8;
@@ -47,10 +47,9 @@ sub grand_search_init {
       split ' ', $ENV{PERLDOCJP_ENCODINGS} || 'euc-jp shiftjis utf8';
 
   if ($self->opt_J or ($pages->[0] && $pages->[0] =~ /^https?:/)) {
-    my $ua  = LWP::UserAgent->new(agent => "Pod-PerldocJp/$VERSION");
-       $ua->env_proxy;
+    my $ua  = HTTP::Tiny->new(agent => "Pod-PerldocJp/$VERSION");
 
-    my $api_url = $ENV{PERLDOCJP_SERVER} || 'http://perldoc.tcool.org/api/pod';
+    my $api_url = $ENV{PERLDOCJP_SERVER} || 'http://perldoc.charsbar.org/api/pod';
     $api_url =~ s|/+$||;
 
     foreach my $page (@$pages) {
@@ -59,7 +58,7 @@ sub grand_search_init {
       my $file = $dir->file(uri_escape($page, '^A-Za-z0-9_') . '.pod');
       unless ($file->size && $file->mtime > time - 60 * 60 * 24) {
         my $res = $ua->mirror($url => $file->absolute);
-        if ($res->is_success && (my $pod = $file->slurp) !~ /^=encoding\s/m) {
+        if ($res->{success} && (my $pod = $file->slurp) !~ /^=encoding\s/m) {
           # You can't trust perldoc.jp's Content-Type too much.
           # (there're several utf-8 translations, though perldoc.jp
           # is (or was) supposed to use euc-jp)
@@ -68,7 +67,7 @@ sub grand_search_init {
           if (ref $enc) {
             $encoding = $enc->name;
           }
-          elsif (my $ctype = $res->header('Content-Type')) {
+          elsif (my $ctype = $res->{headers}{'content-type'}) {
             ($encoding) = $ctype =~ /charset\s*=\s*([\w-]+)/;
           }
           if ($encoding) {
