@@ -11,7 +11,7 @@ WriteMakefile(
     'Encode'              => '0',
     'HTTP::Tiny'          => '0',
     'Path::Extended'      => '0.12',
-    'Pod::Perldoc'        => '3.15',
+    'Pod::Perldoc'        => '3.23',
     'Pod::Text'           => '3.13',
     'Pod::Simple'         => '3.08',
     'Term::Encoding'      => '0',
