@@ -1,6 +1,6 @@
 requires 'Encode'              => '0';
 requires 'HTTP::Tiny'          => '0';
-requires 'Path::Tiny'          => '0.44';
+requires 'Path::Tiny'          => '0.044';
 requires 'Pod::Perldoc'        => '3.23';
 requires 'Pod::Text'           => '3.13';
 requires 'Pod::Simple'         => '3.08';
