@@ -103,7 +103,7 @@ sub grand_search_init {
 }
 
 {
-  # shamelessly ripped from Pod::Perldoc 3.15 and tweaked
+  # shamelessly ripped from Pod::Perldoc 3.23 and tweaked
 
   sub opt_o_with { # "o" for output format
     my($self, $rest) = @_;
@@ -111,7 +111,7 @@ sub grand_search_init {
     if($rest =~ m/^(\w+)$/s) {
       $rest = $1; #untaint
     } else {
-      warn "\"$rest\" isn't a valid output format.  Skipping.\n";
+      $self->warn( qq("$rest" isn't a valid output format.  Skipping.\n") );
       return;
     }
 
@@ -128,8 +128,8 @@ sub grand_search_init {
         "\L$rest", "\L\u$rest", "\U$rest" # And then try variations
 
       ) {
+        $self->aside("Considering $prefix$stem\n");
         push @classes, $prefix . $stem;
-        #print "Considering $prefix$stem\n";
       }
 
       # Tidier, but misses too much:
@@ -149,8 +149,8 @@ sub grand_search_init {
     $self->opt_M_with('Pod::Perldoc::ToPod');   # the always-there fallthru
     $self->opt_o_with('text');
 
-    # TWEAKED: man requires external pod2man, thus hard to tweak
-    # $self->opt_o_with('man') unless IS_MSWin32 || IS_Dos
+    # TWEAKED: XXX: should support term later
+    # $self->opt_o_with('term') unless $self->is_mswin32 || $self->is_dos
     #   || !($ENV{TERM} && (
     #       ($ENV{TERM} || '') !~ /dumb|emacs|none|unknown/i
     #      ));
@@ -162,29 +162,35 @@ sub grand_search_init {
     my ($self, $found_things) = @_;
     my @dynamic_pod;
 
+    $self->search_perlapi($found_things, \@dynamic_pod)   if  $self->opt_a;
+
     $self->search_perlfunc($found_things, \@dynamic_pod)  if  $self->opt_f;
 
     $self->search_perlvar($found_things, \@dynamic_pod)   if  $self->opt_v;
 
     $self->search_perlfaqs($found_things, \@dynamic_pod)  if  $self->opt_q;
 
-    if( ! $self->opt_f and ! $self->opt_q and ! $self->opt_v ) {
+    if( ! $self->opt_f and ! $self->opt_q and ! $self->opt_v and ! $self->opt_a) {
       Pod::Perldoc::DEBUG > 4 and print "That's a non-dynamic pod search.\n";
     } elsif ( @dynamic_pod ) {
       $self->aside("Hm, I found some Pod from that search!\n");
       my ($buffd, $buffer) = $self->new_tempfile('pod', 'dyn');
+      if ( $] >= 5.008 && $self->opt_L ) {
+        binmode($buffd, ":utf8");
+        print $buffd "=encoding utf8\n\n";
+      }
 
       push @{ $self->{'temp_file_list'} }, $buffer;
       # I.e., it MIGHT be deleted at the end.
 
-      my $in_list = $self->opt_f || $self->opt_v;
+      my $in_list = !$self->not_dynamic && $self->opt_f || $self->opt_v || $self->opt_a;
       # TWEAKED: to add =encoding utf-8 and encode_utf8
       print $buffd "=encoding utf-8\n\n";
       print $buffd "=over 8\n\n" if $in_list;
       print $buffd map {encode_utf8($_)} @dynamic_pod  or die "Can't print $buffer: $!";
       print $buffd "=back\n"     if $in_list;
 
-      close $buffd        or die "Can't close $buffer: $!";
+      close $buffd        or $self->die( "Can't close $buffer: $!" );
 
       @$found_things = $buffer;
         # Yes, so found_things never has more than one thing in
@@ -207,7 +213,7 @@ sub grand_search_init {
 
     my $perlfunc = shift @$found_things;
     open(PFUNC, "<", $perlfunc) # "Funk is its own reward"
-        or die("Can't open $perlfunc: $!");
+        or $self->die("Can't open $perlfunc: $!");
 
     # Functions like -r, -e, etc. are listed under `-X'.
     my $search_re = ($self->opt_f =~ /^-[rwxoRWXOeszfdlpSbctugkTBMAC]$/)
@@ -217,9 +223,17 @@ sub grand_search_init {
      print "Going to perlfunc-scan for $search_re in $perlfunc\n";
 
     my $re = 'Alphabetical Listing of Perl Functions';
-    if ( $self->opt_L ) {
-      my $tr = $self->{'translators'}->[0];
-      $re =  $tr->search_perlfunc_re if $tr->can('search_perlfunc_re');
+
+    # Check available translator or backup to default (english)
+    if ( $self->opt_L && defined $self->{'translators'}->[0] ) {
+        my $tr = $self->{'translators'}->[0];
+        $re =  $tr->search_perlfunc_re if $tr->can('search_perlfunc_re');
+        if ( $] < 5.008 ) {
+            $self->aside("Your old perl doesn't really have proper unicode support.");
+        }
+        else {
+            binmode(PFUNC, ":utf8");
+        }
     }
 
     # Skip introduction
@@ -236,12 +250,39 @@ sub grand_search_init {
     # Look for our function
     my $found = 0;
     my $inlist = 0;
+
+    my @perlops = qw(m q qq qr qx qw s tr y);
+
+    my @related;
+    my $related_re;
     while (<PFUNC>) {  # "The Mothership Connection is here!"
-      if ( m/^=item\s+$search_re\b/ )  {
+      last if( grep{ $self->opt_f eq $_ }@perlops );
+
+      if ( /^=over/ and not $found ) {
+        ++$inlist;
+      }
+      elsif ( /^=back/ and not $found and $inlist ) {
+        --$inlist;
+      }
+
+
+      if ( m/^=item\s+$search_re\b/ and $inlist < 2 )  {
         $found = 1;
       }
+      elsif (@related > 1 and /^=item/) {
+        $related_re ||= join "|", @related;
+        if (m/^=item\s+(?:$related_re)\b/) {
+          $found = 1;
+        }
+        else {
+          last if $found > 1 and $inlist < 2;
+        }
+      }
       elsif (/^=item/) {
-        last if $found > 1 and not $inlist;
+        last if $found > 1 and $inlist < 2;
+      }
+      elsif ($found and /^X<[^>]+>/) {
+        push @related, m/X<([^>]+)>/g;
       }
       next unless $found;
       if (/^=over/) {
@@ -254,13 +295,18 @@ sub grand_search_init {
       push @$pod, decode($encoding, $_);
       ++$found if /^\w/;        # found descriptive text
     }
+
+    if( !@$pod ){
+        $self->search_perlop( $found_things, $pod );
+    }
+
     if (!@$pod) {
-      die sprintf
+      CORE::die( sprintf
         "No documentation for perl function `%s' found\n",
-        $self->opt_f
+        $self->opt_f )
         ;
     }
-    close PFUNC                or die "Can't open $perlfunc: $!";
+    close PFUNC                or $self->die( "Can't open $perlfunc: $!" );
 
     return;
   }
@@ -271,16 +317,16 @@ sub grand_search_init {
     my $opt = $self->opt_v;
 
     if ( $opt !~ /^ (?: [\@\%\$]\S+ | [A-Z]\w* ) $/x ) {
-      die "'$opt' does not look like a Perl variable\n";
+      CORE::die( "'$opt' does not look like a Perl variable\n" );
     }
 
     Pod::Perldoc::DEBUG > 2 and print "Search: @$found_things\n";
 
     my $perlvar = shift @$found_things;
     open(PVAR, "<", $perlvar)               # "Funk is its own reward"
-        or die("Can't open $perlvar: $!");
+        or $self->die("Can't open $perlvar: $!");
 
-    if ( $opt =~ /^\$\d+$/ ) { # handle $1, $2, ..., $9
+    if ( $opt ne '$0' && $opt =~ /^\$\d+$/ ) { # handle $1, $2, ..., $9
       $opt = '$<I<digits>>';
     }
     my $search_re = quotemeta($opt);
@@ -327,6 +373,7 @@ sub grand_search_init {
         ++$inlist;
       }
       elsif (/^=back/) {
+        last if $found && !$inheader && !$inlist;
         --$inlist;
       }
       # TWEAKED: to decode
@@ -335,9 +382,9 @@ sub grand_search_init {
     }
     @$pod = () unless $found;
     if (!@$pod) {
-      die "No documentation for perl variable '$opt' found\n";
+      CORE::die( "No documentation for perl variable '$opt' found\n" );
     }
-    close PVAR                or die "Can't open $perlvar: $!";
+    close PVAR                or $self->die( "Can't open $perlvar: $!" );
 
     return;
   }
@@ -350,7 +397,7 @@ sub grand_search_init {
     my $search_key = $self->opt_q;
 
     my $rx = eval { qr/$search_key/ }
-      or die <<EOD;
+      or $self->die( <<EOD );
 Invalid regular expression '$search_key' given as -q pattern:
 $@
 Did you mean \\Q$search_key ?
@@ -359,9 +406,9 @@ EOD
 
     local $_;
     foreach my $file (@$found_things) {
-      die "invalid file spec: $!" if $file =~ /[<>|]/;
+      $self->die( "invalid file spec: $!" ) if $file =~ /[<>|]/;
       open(INFAQ, "<", $file)  # XXX 5.6ism
-        or die "Can't read-open $file: $!\nAborting";
+        or $self->die( "Can't read-open $file: $!\nAborting" );
       # TWEAKED: to find encoding
       my $encoding = 'utf-8';
       while (<INFAQ>) {
@@ -381,8 +428,94 @@ EOD
       }
       close(INFAQ);
     }
-    die("No documentation for perl FAQ keyword `$search_key' found\n")
+    CORE::die("No documentation for perl FAQ keyword `$search_key' found\n")
       unless @$pod;
+
+    if ( $self->opt_l ) {
+        CORE::die((join "\n", keys %found_in) . "\n");
+    }
+    return;
+  }
+
+  sub search_perlapi {
+    my($self, $found_things, $pod) = @_;
+
+    Pod::Perldoc::DEBUG > 2 and print "Search: @$found_things\n";
+
+    my $perlapi = shift @$found_things;
+    open(PAPI, "<", $perlapi)               # "Funk is its own reward"
+      or $self->die("Can't open $perlapi: $!");
+
+    my $search_re = quotemeta($self->opt_a);
+
+    Pod::Perldoc::DEBUG > 2 and
+     print "Going to perlapi-scan for $search_re in $perlapi\n";
+
+    # Check available translator or backup to default (english)
+    if ( $self->opt_L && defined $self->{'translators'}->[0] ) {
+      my $tr = $self->{'translators'}->[0];
+      if ( $] < 5.008 ) {
+        $self->aside("Your old perl doesn't really have proper unicode support.");
+      }
+      else {
+        binmode(PAPI, ":utf8");
+      }
+    }
+
+    local $_;
+    # TWEAKED: to find encoding
+    my $encoding = 'utf-8';
+    while (<PAPI>) {
+      if (/^=encoding\s+(\S+)/) {
+        $encoding = $1;
+      }
+      last if /^=over 8/;
+    }
+
+    # Look for our function
+    my $found = 0;
+    my $inlist = 0;
+
+    my @related;
+    my $related_re;
+    while (<PAPI>) {  # "The Mothership Connection is here!"
+      if ( m/^=item\s+$search_re\b/ )  {
+        $found = 1;
+      }
+      elsif (@related > 1 and /^=item/) {
+        $related_re ||= join "|", @related;
+        if (m/^=item\s+(?:$related_re)\b/) {
+          $found = 1;
+        }
+        else {
+          last;
+        }
+      }
+      elsif (/^=item/) {
+        last if $found > 1 and not $inlist;
+      }
+      elsif ($found and /^X<[^>]+>/) {
+        push @related, m/X<([^>]+)>/g;
+      }
+      next unless $found;
+      if (/^=over/) {
+        ++$inlist;
+      }
+      elsif (/^=back/) {
+        last if $found > 1 and not $inlist;
+        --$inlist;
+      }
+      push @$pod, decode($encoding, $_);
+      ++$found if /^\w/;        # found descriptive text
+    }
+
+    if (!@$pod) {
+      CORE::die( sprintf
+        "No documentation for perl api function '%s' found\n",
+        $self->opt_a )
+      ;
+    }
+    close PAPI                or $self->die( "Can't open $perlapi: $!" );
 
     return;
   }
@@ -390,7 +523,7 @@ EOD
   # TWEAKED: translation and encoding
   sub usage {
     my $self = shift;
-    warn "@_\n" if @_;
+    $self->warn( "@_\n" ) if @_;
 
     # Erase evidence of previous errors (if any), so exit status is simple.
     $! = 0;
@@ -423,19 +556,20 @@ perldoc [options] -v PerlVariable
     -J   perldoc.jpの日本語訳も検索
     -q   perlfaq[1-9]の質問を検索
     -f   Perlの組み込み関数を検索
+    -a   Perl APIを検索
     -v   Perlの定義済み変数を検索
 
-PageName|ModuleName...
+PageName|ModuleName|ProgramName|URL...
     表示したいドキュメント名です。「perlfunc」のようなページ名、
     モジュール名(「Term::Info」または「Term/Info」)、「perldoc」
-    のようなプログラム名を指定できます。0.09からはPODのURLを指定
-    することもできるようになりました。
+    のようなプログラム名、http(s)で始まるURLを指定できます。
 
 BuiltinFunction
-    Perlの関数名です。「perlfunc」からドキュメントを抽出します。
+    Perlの関数名です。「perlfunc」ないし「perlop」からドキュメント
+    を抽出します。
 
 FAQRegex
-    perlfaq[1-9]を検索して正規表現にマッチした質問を抽出します。
+    正規表現です。perlfaq[1-9]を検索してマッチした質問を抽出します。
 
 PERLDOC環境変数で指定したスイッチはコマンドライン引数の前に適用されます。
 PODの索引には(あれば)ファイル名の一覧が(1行に1つ)含まれています。
@@ -443,26 +577,32 @@ PODの索引には(あれば)ファイル名の一覧が(1行に1つ)含まれ�
 [PerldocJp v$Pod::PerldocJp::VERSION based on Perldoc v$Pod::Perldoc::VERSION]
 EOF
 
-    die encode($term_encoding => $usage);
+    CORE::die encode($term_encoding => $usage);
   }
 
   sub usage_brief {
-    my $me = $0;		# Editing $0 is unportable
-
-    $me =~ s,.*[/\\],,; # get basename
+    my $self = shift;
+    my $program_name = $self->program_name;
 
     my $usage =<<"EOUSAGE";
-使い方: $me [-h] [-V] [-r] [-i] [-D] [-t] [-u] [-m] [-n nroffer_program] [-l] [-J] [-T] [-d output_filename] [-o output_format] [-M FormatterModuleNameToUse] [-w formatter_option:option_value] [-L translation_code] [-F] [-X] PageName|ModuleName|ProgramName|URL
-       $me -f PerlFunc
-       $me -q FAQKeywords
-       $me -A PerlVar
+使い方: $program_name [-hVriDtumFXlTJ] [-n nroffer_program]
+     [-d output_filename] [-o output_format] [-M FormatterModule]
+     [-w formatter_option:option_value] [-L translation_code]
+     PageName|ModuleName|ProgramName
+
+Examples:
+
+       $program_name -f PerlFunc
+       $program_name -q FAQKeywords
+       $program_name -v PerlVar
+       $program_name -a PerlAPI
 
 -hオプションをつけるともう少し詳しいヘルプが表示されます。
 詳細は"perldocjp perldocjp"をご覧ください。
 [PerldocJp v$Pod::PerldocJp::VERSION based on Perldoc v$Pod::Perldoc::VERSION]
 EOUSAGE
 
-    die encode($term_encoding => $usage);
+    CORE::die encode($term_encoding => $usage);
   }
 }
 
@@ -508,7 +648,7 @@ always try to use "text" formatter.
 
 adds encoding info while writing a temp file to show.
 
-=head2 search_perlfaqs, search_perlfunc, search_perlvar
+=head2 search_perlfaqs, search_perlfunc, search_perlvar, search_perlapi
 
 decode while searching.
 
