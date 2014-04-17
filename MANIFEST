@@ -1,4 +1,5 @@
 Changes
+cpanfile
 lib/Pod/PerldocJp.pm
 lib/Pod/PerldocJp/ToText.pm
 Makefile.PL
