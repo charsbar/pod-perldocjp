@@ -55,7 +55,7 @@ sub grand_search_init {
       $self->aside("Searching for $page\n");
       my $url = ($page =~ /^https?:/) ? $page : "$api_url/$page";
       my $file = $dir->child(uri_escape($page, '^A-Za-z0-9_') . '.pod');
-      unless ($file->stat->size && $file->stat->mtime > time - 60 * 60 * 24) {
+      unless ($file->exists && $file->stat->size && $file->stat->mtime > time - 60 * 60 * 24) {
         my $res = $ua->mirror($url => "$file");
         if ($res->{success} && (my $pod = $file->slurp) !~ /^=encoding\s/m) {
           # You can't trust perldoc.jp's Content-Type too much.
