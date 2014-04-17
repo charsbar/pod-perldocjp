@@ -618,13 +618,12 @@ Pod::PerldocJp - perldoc that also checks perldoc.jp
 
 =head1 SYNOPSIS
 
-  perldocjp -J perlfunc  # show translation (if any)
-  perldocjp    perlfunc  # show original version
-  perldocjp    perldocjp # 日本語で使い方を見る
+  perldocjp perlfunc  # show original version
+  perldocjp perldocjp # 日本語で使い方を見る
 
 =head1 DESCRIPTION
 
-This is a drop-in-replacement for C<perldoc> for Japanese people. Usage is the same, except it can look for a translation at L<http://perldoc.jp> with -J option.
+This is a drop-in-replacement for C<perldoc> for Japanese people. Usage is the same, except it looks for a translation at L<http://perldoc.jp>.
 
 =head1 TWEAKED METHODS
 
@@ -634,7 +633,7 @@ to support -J option.
 
 =head2 grand_search_init
 
-looks for a 5.10.0 translation at perldoc.jp if -J option is set.
+looks for a translation at perldoc.jp.
 
 =head2 opt_o_with
 
