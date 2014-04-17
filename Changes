@@ -1,5 +1,8 @@
 Revision history for Pod-PerldocJp
 
+0.18 2014/04/17
+  - fixed packaging issue
+
 0.17 2014/04/17
   - applied changes in Pod::Perldoc to support a "-a" option
     (to show perlapi in Japanese)
