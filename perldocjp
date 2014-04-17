@@ -19,6 +19,7 @@ perldocjp - 日本語訳されたPerlのドキュメントを読む
   perldocjp -f print      # print関数の使い方を日本語で読む
   perldocjp -v $_         # $_変数の使い方を日本語で読む
   perldocjp -q debug      # debugについてのFAQを日本語で読む
+  perldocjp -a SvOK       # SvOK APIの使い方を日本語で読む
   perldocjp -l perldebug  # ダウンロードしてきた翻訳のありかを調べる
   perldocjp -m perldebug  # ダウンロードしてきた翻訳のソースを見る
 
