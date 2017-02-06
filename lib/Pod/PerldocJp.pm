@@ -45,7 +45,7 @@ sub grand_search_init {
     my @encodings =
       split ' ', $ENV{PERLDOCJP_ENCODINGS} || 'euc-jp shiftjis utf8';
 
-  if ($self->opt_J or ($pages->[0] && $pages->[0] =~ /^https?:/)) {
+  if (not $self->opt_F and ($self->opt_J or ($pages->[0] && $pages->[0] =~ /^https?:/))) {
     my $ua  = HTTP::Tiny->new(agent => "Pod-PerldocJp/$VERSION");
 
     my $api_url = $ENV{PERLDOCJP_SERVER} || 'http://perldoc.charsbar.org/api/pod';
