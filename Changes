@@ -1,5 +1,8 @@
 Revision history for Pod-PerldocJp
 
+0.19 2017/02/06
+  - fixed -F option (patched by robario++)
+
 0.18 2014/04/17
   - fixed packaging issue
 
