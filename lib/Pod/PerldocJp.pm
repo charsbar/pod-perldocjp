@@ -56,8 +56,21 @@ sub grand_search_init {
       my $url = ($page =~ /^https?:/) ? $page : "$api_url/$page";
       my $file = $dir->child(uri_escape($page, '^A-Za-z0-9_') . '.pod');
       unless ($file->exists && $file->stat->size && $file->stat->mtime > time - 60 * 60 * 24) {
-        my $res = $ua->mirror($url => "$file");
-        if ($res->{success} && (my $pod = $file->slurp) !~ /^=encoding\s/m) {
+        my $res = $ua->get($url);
+        unless ($res->{success}) {
+          next;
+        }
+        # perldoc.jp is doing redirects.
+        # For example, if you access https://perldoc.jp/perlfunc, you will be redirected to http://perldoc.jp/docs/perl/5.26.1/perlfunc.pod.
+        if ($res->{redirects}) {
+          # perldoc.jp xxx.pod page is rendering pod to html.
+          # xxx.pod.pod page is natural pod page.
+          $url = $res->{redirects}->[-1]->{headers}->{location} . '.pod';
+          $res = $ua->get($url);
+          next unless ($res->{success});
+        }
+        my $pod = $res->{content};
+        if ($pod !~ /^=encoding\s/m) {
           # You can't trust perldoc.jp's Content-Type too much.
           # (there're several utf-8 translations, though perldoc.jp
           # is (or was) supposed to use euc-jp)
@@ -71,9 +84,9 @@ sub grand_search_init {
           }
           if ($encoding) {
             $pod = "=encoding $encoding\n\n$pod";
-            $file->spew($pod);
           }
         }
+        $file->spew($pod);
       }
       push @found, "$file" if $file->stat->size;
     }
