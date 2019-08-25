@@ -48,7 +48,7 @@ sub grand_search_init {
   if (not $self->opt_F and ($self->opt_J or ($pages->[0] && $pages->[0] =~ /^https?:/))) {
     my $ua  = HTTP::Tiny->new(agent => "Pod-PerldocJp/$VERSION");
 
-    my $api_url = $ENV{PERLDOCJP_SERVER} || 'https://perldoc.jp' || 'http://perldoc.charsbar.org/api/pod';
+    my $api_url = $ENV{PERLDOCJP_SERVER} || 'https://perldoc.jp';
     $api_url =~ s|/+$||;
 
     foreach my $page (@$pages) {
